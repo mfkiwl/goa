@@ -300,13 +300,13 @@ if {$perform(publish)} {
 		                "\n   goa help add-depot-user\n" }
 
 	# determine to-be-published archives
-	set archives [goa published-archives]
+	lassign [goa published-archives] archives index_archive
 
 	# download archives from other users that are not present in public
 	goa download-foreign $archives
 
 	# add index archive to archives
-	if {[info exists index_archive]} {
+	if {$index_archive != ""} {
 		lappend archives $index_archive }
 
 	# publish archives

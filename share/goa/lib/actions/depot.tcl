@@ -430,7 +430,7 @@ namespace eval goa {
 
 	proc export-pkgs { &exported_archives } {
 
-		global publish_pkg arch
+		global publish_pkg arch project_dir
 		upvar  ${&exported_archives} exported_archives
 
 		set pkg_expr "*"
@@ -448,9 +448,12 @@ namespace eval goa {
 			set runtime_archives { }
 	
 			# automatically add the project's local raw and src archives
-			if {[info exists raw_dir]} {
+			set raw_dir [file join $project_dir raw]
+			if {[file exists $raw_dir] && [file isdirectory $raw_dir]} {
 				lappend runtime_archives [versioned_project_archive raw] }
-			if {[info exists src_dir]} {
+
+			set src_dir [file join $project_dir src]
+			if {[file exists $src_dir] && [file isdirectory $src_dir]} {
 				lappend runtime_archives [versioned_project_archive src] }
 	
 			# add archives specified at the pkg's 'archives' file
@@ -678,6 +681,7 @@ namespace eval goa {
 
 		global project_dir publish_pkg bin_dir api_dir arch
 		set archives { }
+		set index_archive ""
 	
 		set raw_dir [file join $project_dir raw]
 		if {[file exists $raw_dir] && [file isdirectory $raw_dir]} {
@@ -715,7 +719,7 @@ namespace eval goa {
 					lappend archives [apply_arch $pkg_path $pkg_arch] } }
 		}
 
-		return $archives
+		return [list $archives $index_archive]
 	}
 
 	proc download-foreign { archives } {
