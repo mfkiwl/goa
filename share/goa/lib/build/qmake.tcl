@@ -51,28 +51,30 @@ proc create_or_update_build_dir { } {
 	lappend qmake_ldlibs -l:stdcxx.lib.so
 	lappend qmake_ldlibs -l:qt5_component.lib.so
 
-	set ::env(GENODE_QMAKE_CC)           "${cross_dev_prefix}gcc"
-	set ::env(GENODE_QMAKE_CXX)          "${cross_dev_prefix}g++"
-	set ::env(GENODE_QMAKE_LINK)         "${cross_dev_prefix}g++"
-	set ::env(GENODE_QMAKE_AR)           "${cross_dev_prefix}ar"
-	set ::env(GENODE_QMAKE_OBJCOPY)      "${cross_dev_prefix}objcopy"
-	set ::env(GENODE_QMAKE_NM)           "${cross_dev_prefix}nm"
-	set ::env(GENODE_QMAKE_STRIP)        "${cross_dev_prefix}strip"
-	set ::env(GENODE_QMAKE_CFLAGS)       "$qmake_cflags"
-	set ::env(GENODE_QMAKE_LFLAGS_APP)   "$ldflags $ldlibs_common $ldlibs_exe $qmake_ldlibs"
-	set ::env(GENODE_QMAKE_LFLAGS_SHLIB) "$ldflags_so $ldlibs_common $ldlibs_so $qmake_ldlibs"
+	set     cmd [sandboxed_build_command]
+
+	lappend cmd --setenv GENODE_QMAKE_CC           "${cross_dev_prefix}gcc"
+	lappend cmd --setenv GENODE_QMAKE_CXX          "${cross_dev_prefix}g++"
+	lappend cmd --setenv GENODE_QMAKE_LINK         "${cross_dev_prefix}g++"
+	lappend cmd --setenv GENODE_QMAKE_AR           "${cross_dev_prefix}ar"
+	lappend cmd --setenv GENODE_QMAKE_OBJCOPY      "${cross_dev_prefix}objcopy"
+	lappend cmd --setenv GENODE_QMAKE_NM           "${cross_dev_prefix}nm"
+	lappend cmd --setenv GENODE_QMAKE_STRIP        "${cross_dev_prefix}strip"
+	lappend cmd --setenv GENODE_QMAKE_CFLAGS       "$qmake_cflags"
+	lappend cmd --setenv GENODE_QMAKE_LFLAGS_APP   "$ldflags $ldlibs_common $ldlibs_exe $qmake_ldlibs"
+	lappend cmd --setenv GENODE_QMAKE_LFLAGS_SHLIB "$ldflags_so $ldlibs_common $ldlibs_so $qmake_ldlibs"
 
 	#
 	# libgcc must appear on the command line after all other libs
 	# (including those added by qmake) and using the QMAKE_LIBS
 	# variable achieves this, fortunately
 	#
-	set ::env(GENODE_QMAKE_LIBS) "-lgcc"
+	lappend cmd --setenv GENODE_QMAKE_LIBS "-lgcc"
 
 	set qt_conf "qmake_root/mkspecs/$qmake_platform/qt.conf"
-	set cmd [list [file join $qt5_tool_dir qmake] -qtconf $qt_conf [file join $project_dir src]]
+	lappend cmd [file join $qt5_tool_dir qmake] -qtconf $qt_conf [file join $project_dir src]
 
-	diag "create build directory via command:" {*}$cmd
+	diag "create build directory via qmake"
 
 	if {[catch {exec -ignorestderr {*}$cmd | sed "s/^/\[$project_name:qmake\] /" >@ stdout} msg]} {
 		exit_with_error "build-directory creation via qmake failed:\n" $msg }
@@ -85,7 +87,8 @@ proc build { } {
 	global verbose
 	global config::build_dir config::jobs config::project_name
 
-	set cmd [list make -C $build_dir "-j$jobs"]
+	set     cmd [sandboxed_build_command]
+	lappend cmd make -C $build_dir "-j$jobs"
 
 	if {$verbose == 0} {
 		lappend cmd "-s"
