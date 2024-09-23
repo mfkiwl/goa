@@ -1,7 +1,7 @@
 
 proc create_or_update_build_dir { } {
 
-	global tool_dir
+	global tool_dir gaol
 	global cppflags cflags cxxflags ldflags ldflags_so ldlibs_common ldlibs_exe
 	global ldlibs_so env cmake_quirk_args
 	global config::build_dir config::project_dir config::abi_dir
@@ -14,9 +14,9 @@ proc create_or_update_build_dir { } {
 	set orig_pwd [pwd]
 	cd $build_dir
 
-	set ::env(LDFLAGS) "$ldflags $ldlibs_common $ldlibs_exe"
+	set     cmd [goa::sandboxed_build_command]
+	lappend cmd --setenv LDFLAGS "$ldflags $ldlibs_common $ldlibs_exe"
 
-	set cmd { }
 	lappend cmd cmake
 	lappend cmd "-DCMAKE_IGNORE_PREFIX_PATH=/;/usr"
 	lappend cmd "-DCMAKE_MODULE_PATH=[join ${api_dirs} ";"];[file join $tool_dir cmake Modules]"
@@ -51,10 +51,13 @@ proc create_or_update_build_dir { } {
 
 
 proc build { } {
-	global verbose
+	global verbose tool_dir
+	global ldflags ldlibs_common ldlibs_exe
 	global config::build_dir config::jobs config::project_name
 
-	set cmd [list make -C $build_dir "-j$jobs"]
+	set     cmd [goa::sandboxed_build_command]
+	lappend cmd --setenv LDFLAGS "$ldflags $ldlibs_common $ldlibs_exe"
+	lappend cmd make -C $build_dir "-j$jobs"
 
 	if {$verbose == 0} {
 		lappend cmd "-s"
