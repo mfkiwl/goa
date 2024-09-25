@@ -112,8 +112,12 @@ namespace eval ::config {
 			set target_path [lindex $args $num]
 			if { $target_path == "" } { return }
 
-			# resolve symlinks
-			catch { set target_path [unsafe_file link $target_path] }
+			# resolve symlinks (make sure to resolve relative links correctly)
+			catch {
+				set orig_path $target_path
+				set target_path [unsafe_file link $orig_path]
+				set target_path [file join [file dirname $orig_path] $target_path]
+			}
 
 			# normalize path
 			set normalized_path [unsafe_file normalize $target_path]
@@ -128,7 +132,8 @@ namespace eval ::config {
 
 		switch [lindex $args 0] {
 			normalize   { _validate_path_arg $allowed_paths 1 {*}$args }
-			executable  { _validate_path_arg $allowed_tools 1 {*}$args }
+			executable  { if {![file exists [lindex $args 1]]} { return 0 }
+			              _validate_path_arg $allowed_tools 1 {*}$args }
 			link {
 				set argnum 1
 				set arg [lindex $args $argnum]
