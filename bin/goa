@@ -188,6 +188,10 @@ if {![file exists src]} {
 	set perform(build)     0
 }
 
+if {$perform(install-toolchain)} {
+	goa install-toolchain
+}
+
 
 if {$perform(build-dir)} {
 

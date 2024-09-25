@@ -116,6 +116,9 @@ USAGE
 :goa diff:
   Show local modifications of the imported 3rd-party software.
 
+:goa install-toolchain:
+  Downloads and installs the Genode toolchain into the var/ directory.
+
 :goa depot-dir:
   Create a depot directory and install default depot users.
 
